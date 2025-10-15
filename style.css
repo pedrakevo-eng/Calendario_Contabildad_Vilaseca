@@ -3,67 +3,107 @@ body {
   font-family: 'Inter', sans-serif; 
 }
 
-/* Sistema de colores con variables CSS para eventos */
-.event-ronald { --user-color-rgb: 249, 115, 22; } /* Naranja */
-.event-kevin { --user-color-rgb: 34, 197, 94; }   /* Verde */
-.event-claudia { --user-color-rgb: 234, 179, 8; }  /* Amarillo */
-.event-default { --user-color-rgb: 107, 114, 128; } /* Gris */
+#calendar {
+  min-height: 75vh;
+}
 
-.fc-event { 
-  color: #1f2937 !important; 
+/* --- ESTILO FINAL: FONDO POR USUARIO, BORDE IZQUIERDO POR PRIORIDAD --- */
+
+/* Contenedor principal del evento */
+.fc-event {
+  color: white !important; /* Texto blanco para mejor contraste */
   cursor: pointer;
   border-radius: 6px !important;
   padding: 4px 6px !important;
   font-weight: 500;
+  font-size: 0.8em !important;
+  border: 1px solid rgba(0,0,0,0.2) !important; /* Borde sutil para definir el evento */
+  border-left-width: 5px !important; /* Hacemos el borde izquierdo más grueso */
 }
 
-.event-pendiente {
-  background-color: rgba(var(--user-color-rgb), 0.15) !important;
-  border: 1px dashed rgba(var(--user-color-rgb), 0.6) !important;
-  color: #374151 !important; /* Texto un poco más oscuro para legibilidad */
-}
-.event-tentative { 
-  background-color: rgba(var(--user-color-rgb), 0.3) !important; 
-  border: 1px solid rgba(var(--user-color-rgb), 0.5) !important; 
-}
-.event-normal { 
-  background-color: rgba(var(--user-color-rgb), 0.7) !important; 
-  border: 1px solid rgba(var(--user-color-rgb), 1) !important; 
-}
-.event-urgent { 
-  background-color: rgb(var(--user-color-rgb)) !important; 
-  border: 1px solid rgb(var(--user-color-rgb)) !important; 
-  color: white !important; 
-  font-weight: 600; 
+/* Color de fondo por usuario */
+.event-ronald-conde { background-color: rgb(159, 28, 43) !important; }
+.event-kevin-iturri { background-color: rgb(22, 105, 62) !important; }
+.event-claudia-gutierrez { background-color: rgb(236, 72, 153) !important; }
+.event-default { background-color: rgb(107, 114, 128) !important; }
+
+/* Color del borde izquierdo por prioridad */
+.event-urgent { border-left-color: #ef4444 !important; } /* Rojo */
+.event-normal { border-left-color: #22c55e !important; } /* Verde */
+.event-tentative { border-left-color: #eab308 !important; } /* Amarillo */
+.event-pendiente { border-left-color: #a855f7 !important; } /* Morado */
+
+
+/* Estilos para lista de tareas y botones */
+#tasksToggle .active-view {
+  background-color: #3b82f6;
+  color: white;
 }
 
-/* Estilos para el Modal y Notificaciones */
-#eventModal { 
-  transition: opacity 0.3s ease; 
-  z-index: 100; 
+/* Borde de Prioridad en la Lista de Tareas (para consistencia) */
+.priority-border-Pendiente { border-left-color: #a855f7 !important; }
+.priority-border-Tentative { border-left-color: #eab308 !important; }
+.priority-border-Normal { border-left-color: #22c55e !important; }
+.priority-border-Urgent { border-left-color: #ef4444 !important; }
+
+
+/* Estilos para el Select de Prioridad con Color en el Modal */
+#priority, #recurringPriority {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
-#notification { 
-  transition: transform 0.5s ease-in-out; 
-  z-index: 200; 
+.priority-select-Pendiente {
+  background-color: #f5f3ff !important;
+  border-color: #a78bfa !important;
+  color: #5b21b6 !important;
+  font-weight: 600;
+}
+.priority-select-Tentative {
+  background-color: #fefce8 !important;
+  border-color: #facc15 !important;
+  color: #854d0e !important;
+  font-weight: 600;
+}
+.priority-select-Normal {
+  background-color: #f0fdf4 !important;
+  border-color: #4ade80 !important;
+  color: #166534 !important;
+  font-weight: 600;
+}
+.priority-select-Urgent {
+  background-color: #fee2e2 !important;
+  border-color: #f87171 !important;
+  color: #b91c1c !important;
+  font-weight: 600;
 }
 
-/* Animación para el punto brillante de tareas próximas */
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+/* Estilos para el Tooltip (Tippy.js) */
+.tippy-box[data-theme~='custom'] {
+  background-color: #1e293b; /* bg-slate-800 */
+  color: #f1f5f9; /* text-slate-100 */
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
 }
-.glowing-dot {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.tippy-box[data-theme~='custom'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: #1e293b;
+}
+.tippy-box[data-theme~='custom'][data-placement^='bottom'] > .tippy-arrow::before {
+  border-bottom-color: #1e293b;
+}
+.tippy-content {
+  padding: 0.5rem 0.75rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+}
+.tooltip-title {
+  font-weight: 700;
+  border-bottom: 1px solid #475569; /* border-slate-600 */
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.tooltip-body p {
+  margin: 0.25rem 0;
+}
+.tooltip-body strong {
+  color: #94a3b8; /* text-slate-400 */
 }
 
-/* Pequeñas mejoras de UI */
-#tasksList > div {
-    transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, border-color 0.3s ease;
-    border-left: 4px solid transparent;
-}
-#tasksList > div:hover {
-    transform: translateX(4px);
-}
-.user-task {
-    border-left-color: #3b82f6; /* Tailwind blue-500 */
-}

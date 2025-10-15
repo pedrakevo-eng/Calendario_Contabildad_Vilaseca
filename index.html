@@ -10,32 +10,40 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Tooltip Library -->
+  <script src="https://unpkg.com/@popperjs/core@2"></script>
+  <script src="https://unpkg.com/tippy.js@6"></script>
 
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-slate-50 text-slate-800">
 
-  <div id="notification" class="fixed top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-green-500 text-white py-3 px-6 rounded-b-lg shadow-xl">
+  <div id="notification" class="fixed top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-green-500 text-white py-3 px-6 rounded-b-lg shadow-xl z-50">
     <span id="notification-text"></span>
   </div>
 
   <div class="container mx-auto p-4 md:p-8">
-    <header class="flex flex-col md:flex-row justify-between items-center mb-8">
+    <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
       <div class="flex items-center space-x-4">
         <h1 class="text-3xl font-bold text-slate-700">Calendario Contabilidad</h1>
         <div class="relative group">
           <i data-feather="bell" class="text-slate-500 hover:text-blue-600 cursor-pointer"></i>
           <span id="notification-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full hidden">0</span>
           <div id="notification-tooltip" class="absolute left-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl p-4 hidden group-hover:block z-50">
-            <h4 class="font-bold text-sm mb-2 border-b border-slate-200 pb-2">Tareas para Mañana</h4>
+            <h4 class="font-bold text-sm mb-2 border-b border-slate-200 pb-2">Tareas para Hoy y Mañana</h4>
             <ul id="tooltip-list" class="text-sm text-slate-600 space-y-1 mt-2"></ul>
           </div>
         </div>
       </div>
-      <button id="addEventBtn" class="mt-4 md:mt-0 w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-300 hover:shadow-xl hover:scale-105">+ Añadir Evento</button>
+      <div class="flex items-center gap-2">
+        <button id="addRecurringBtn" class="w-full md:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-teal-500/20 transition-all duration-300 hover:shadow-xl hover:scale-105">+ Añadir Cierre Mensual</button>
+        <button id="addEventBtn" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-300 hover:shadow-xl hover:scale-105">+ Añadir Evento</button>
+      </div>
     </header>
 
     <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -43,88 +51,176 @@
         <div id='calendar'></div>
       </div>
       <aside class="bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-4 md:p-6">
-        <h2 class="text-xl font-bold text-slate-700 mb-4 border-b border-slate-200 pb-3">Lista de Tareas</h2>
-        <div id="tasksList" class="space-y-3 max-h-[70vh] overflow-y-auto pr-2"></div>
-      </aside>
-    </main>
-
-    <footer class="mt-8 bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-6">
-        <h3 class="text-lg font-bold text-slate-700 mb-4">Leyenda de Colores</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <h4 class="font-semibold text-slate-600 mb-3">Usuarios</h4>
-                <div class="space-y-2">
-                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full bg-orange-500"></div><span class="text-slate-700">Ronald</span></div>
-                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full bg-green-500"></div><span class="text-slate-700">Kevin</span></div>
-                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full bg-yellow-500"></div><span class="text-slate-700">Claudia</span></div>
-                </div>
-            </div>
-            <div>
-                <h4 class="font-semibold text-slate-600 mb-3">Prioridades</h4>
-                <div class="space-y-2">
-                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg border-2 border-dashed border-slate-300" style="background-color: rgba(107, 114, 128, 0.15)"></div><span class="text-slate-700">Pendiente</span></div>
-                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg border border-slate-300" style="background-color: rgba(107, 114, 128, 0.3)"></div><span class="text-slate-700">Tentativa</span></div>
-                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg border border-slate-400" style="background-color: rgba(107, 114, 128, 0.7)"></div><span class="text-slate-700">Normal</span></div>
-                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg bg-slate-800"></div><span class="text-slate-700">Urgente</span></div>
-                </div>
+        <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
+            <h2 class="text-xl font-bold text-slate-700">Lista de Tareas</h2>
+            <div id="tasksToggle" class="flex items-center border border-slate-300 rounded-lg p-0.5 bg-slate-100">
+                <button data-view="upcoming" class="px-3 py-1 text-sm font-semibold rounded-md transition-colors">Actuales</button>
+                <button data-view="past" class="px-3 py-1 text-sm font-semibold rounded-md transition-colors">Pasadas</button>
             </div>
         </div>
-    </footer>
+        <div id="tasksList" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2"></div>
+      </aside>
+    </main>
     
-    <div class="text-center mt-8 text-sm text-slate-500">
-        <p>&copy; 2025 Contabilidad KHI. Todos los derechos reservados.</p>
+    <!-- Leyenda de Colores -->
+    <section class="mt-8 bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-6">
+      <h3 class="text-lg font-bold text-slate-700 mb-4">Leyenda de Colores</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Responsables -->
+          <div>
+              <h4 class="font-semibold text-slate-600 mb-3">Color de Fondo por Responsable</h4>
+              <div class="space-y-2">
+                  <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full" style="background-color: rgb(159, 28, 43);"></div><span class="text-slate-700">Ronald Conde</span></div>
+                  <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full" style="background-color: rgb(22, 105, 62);"></div><span class="text-slate-700">Kevin Iturri</span></div>
+                  <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full" style="background-color: rgb(236, 72, 153);"></div><span class="text-slate-700">Claudia Gutierrez</span></div>
+              </div>
+          </div>
+          <!-- Prioridades -->
+          <div>
+              <h4 class="font-semibold text-slate-600 mb-3">Borde Izquierdo por Prioridad</h4>
+              <div class="space-y-2">
+                   <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-md bg-slate-200 flex-shrink-0" style="border-left: 5px solid #ef4444;"></div><span class="text-slate-700">Urgente</span></div>
+                   <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-md bg-slate-200 flex-shrink-0" style="border-left: 5px solid #22c55e;"></div><span class="text-slate-700">Normal</span></div>
+                   <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-md bg-slate-200 flex-shrink-0" style="border-left: 5px solid #eab308;"></div><span class="text-slate-700">Tentativa</span></div>
+                   <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-md bg-slate-200 flex-shrink-0" style="border-left: 5px solid #a855f7;"></div><span class="text-slate-700">Pendiente</span></div>
+              </div>
+          </div>
+      </div>
+    </section>
+
+    <!-- Derechos Reservados -->
+    <footer class="text-center mt-8 py-6">
+        <p class="text-sm text-slate-500">&copy; 2025 Vilaseca KIH Contabilidad. Todos los derechos reservados.</p>
+    </footer>
+
+  </div>
+
+  <!-- Modal para Añadir/Editar Evento -->
+  <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-40">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden">
+      
+      <div class="flex items-center justify-between p-6 border-b border-slate-200 relative">
+        <h2 id="modalTitle" class="text-2xl font-bold text-slate-700 w-full text-center"></h2>
+        <button id="xCloseModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 text-3xl font-light">&times;</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto">
+        <form id="eventForm" novalidate>
+          <input type="hidden" id="eventId">
+          <div class="space-y-5">
+            <div>
+              <label for="userName" class="block text-slate-600 text-sm font-bold mb-2">Responsable:</label>
+              <select id="userName" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <option value="" disabled>Selecciona tu nombre</option>
+                <option value="Ronald Conde">Ronald Conde</option>
+                <option value="Kevin Iturri">Kevin Iturri</option>
+                <option value="Claudia Gutierrez">Claudia Gutierrez</option>
+              </select>
+            </div>
+            <div>
+              <label for="eventTitle" class="block text-slate-600 text-sm font-bold mb-2">Título del Evento:</label>
+              <input type="text" id="eventTitle" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="startDate" class="block text-slate-600 text-sm font-bold mb-2">Inicio:</label>
+                <input type="datetime-local" id="startDate" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              </div>
+              <div>
+                <label for="endDate" class="block text-slate-600 text-sm font-bold mb-2">Fin (Opcional):</label>
+                <input type="datetime-local" id="endDate" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+            <div>
+              <label for="priority" class="block text-slate-600 text-sm font-bold mb-2">Prioridad:</label>
+              <select id="priority" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="Pendiente">Pendiente</option>
+                <option value="Tentative">Tentativa</option>
+                <option value="Normal" selected>Normal</option>
+                <option value="Urgent">Urgente</option>
+              </select>
+            </div>
+            <div>
+              <label for="eventNotes" class="block text-slate-600 text-sm font-bold mb-2">Notas (Opcional):</label>
+              <textarea id="eventNotes" rows="3" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <div class="p-6 border-t border-slate-200 mt-auto bg-slate-50">
+        <div class="flex items-center justify-between space-x-4">
+          <button type="button" id="deleteEventBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg hidden transition-colors">Eliminar</button>
+          <button type="submit" form="eventForm" id="saveEventBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Guardar</button>
+        </div>
+        <button type="button" id="closeModalBtn" class="mt-4 text-center w-full text-slate-500 hover:text-slate-700">Cancelar</button>
+      </div>
     </div>
   </div>
 
-  <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 relative">
-      <button id="xCloseModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 text-3xl font-light">&times;</button>
-      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-center text-slate-700"></h2>
-      <form id="eventForm" novalidate>
-        <input type="hidden" id="eventId">
-        <div class="space-y-5">
-            <div>
-                <label for="userName" class="block text-slate-600 text-sm font-bold mb-2">Responsable:</label>
-                <select id="userName" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    <option value="" disabled>Selecciona tu nombre</option>
-                    <option value="Ronald">Ronald</option>
-                    <option value="Kevin">Kevin</option>
-                    <option value="Claudia">Claudia</option>
-                </select>
-            </div>
-            <div>
-                <label for="eventTitle" class="block text-slate-600 text-sm font-bold mb-2">Título del Evento:</label>
-                <input type="text" id="eventTitle" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="startDate" class="block text-slate-600 text-sm font-bold mb-2">Inicio:</label>
-                    <input type="datetime-local" id="startDate" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="endDate" class="block text-slate-600 text-sm font-bold mb-2">Fin (Opcional):</label>
-                    <input type="datetime-local" id="endDate" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            </div>
-            <div>
-                <label for="priority" class="block text-slate-600 text-sm font-bold mb-2">Prioridad:</label>
-                <select id="priority" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Tentative">Tentativa</option>
-                    <option value="Normal" selected>Normal</option>
-                    <option value="Urgent">Urgente</option>
-                </select>
-            </div>
+  <!-- Modal para Eventos Recurrentes (Cierres) -->
+  <div id="recurringEventModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-40">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden">
+        <div class="flex items-center justify-between p-6 border-b border-slate-200">
+            <h2 id="recurringModalTitle" class="text-2xl font-bold text-slate-700">Nuevo Cierre Mensual</h2>
+            <button id="xCloseRecurringModalBtn" class="text-slate-400 hover:text-slate-800 text-3xl font-light">&times;</button>
         </div>
-        <div class="flex items-center justify-between space-x-4 mt-8">
-          <button type="button" id="deleteEventBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg hidden transition-colors">Eliminar</button>
-          <button type="submit" id="saveEventBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Guardar</button>
+        <div class="p-6 overflow-y-auto">
+            <form id="recurringEventForm" novalidate>
+                <div class="space-y-5">
+                    <div>
+                        <label for="recurringClientName" class="block text-slate-600 text-sm font-bold mb-2">Nombre del Cliente:</label>
+                        <input type="text" id="recurringClientName" placeholder="Ej: CBN" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="recurringDay" class="block text-slate-600 text-sm font-bold mb-2">Día de Cierre (1-31):</label>
+                        <input type="number" id="recurringDay" value="25" min="1" max="31" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label for="recurringUserName" class="block text-slate-600 text-sm font-bold mb-2">Responsable:</label>
+                        <select id="recurringUserName" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                            <option value="" disabled selected>Selecciona un responsable</option>
+                            <option value="Ronald Conde">Ronald Conde</option>
+                            <option value="Kevin Iturri">Kevin Iturri</option>
+                            <option value="Claudia Gutierrez">Claudia Gutierrez</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="recurringPriority" class="block text-slate-600 text-sm font-bold mb-2">Prioridad:</label>
+                        <select id="recurringPriority" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Normal" selected>Normal</option>
+                            <option value="Urgent">Urgente</option>
+                            <option value="Tentative">Tentativa</option>
+                            <option value="Pendiente">Pendiente</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
         </div>
-         <button type="button" id="closeModalBtn" class="mt-4 text-center w-full text-slate-500 hover:text-slate-700">Cancelar</button>
-      </form>
+        <div class="p-6 border-t border-slate-200 mt-auto bg-slate-50">
+            <button type="submit" form="recurringEventForm" id="saveRecurringBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg w-full">Generar 12 Cierres</button>
+            <button type="button" id="closeRecurringModalBtn" class="mt-4 text-center w-full text-slate-500 hover:text-slate-700">Cancelar</button>
+        </div>
+    </div>
+  </div>
+
+
+  <!-- Modal de Confirmación de Eliminación -->
+  <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm text-center p-8">
+        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+            <i data-feather="trash-2" class="h-8 w-8 text-red-600"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">¿Estás seguro?</h2>
+        <p class="text-slate-500 mb-6">Esta acción no se puede deshacer. Se eliminará el evento permanentemente.</p>
+        <div class="flex justify-center items-center space-x-4">
+            <button id="cancelDeleteBtn" class="py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg">Cancelar</button>
+            <button id="confirmDeleteBtn" class="py-2 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg">Sí, eliminar</button>
+        </div>
     </div>
   </div>
   
   <script src="script.js"></script>
 </body>
 </html>
+
