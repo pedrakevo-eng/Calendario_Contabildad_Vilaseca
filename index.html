@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendario Contabilidad</title>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Librerías Externas -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Nuestros Estilos -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- Barra de Notificaciones -->
+  <div id="notification" class="fixed top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-green-500 text-white py-3 px-6 rounded-b-lg shadow-xl">
+    <span id="notification-text"></span>
+  </div>
+
+  <!-- Contenedor Principal -->
+  <div class="container mx-auto p-4 md:p-8">
+    <header class="flex flex-col md:flex-row justify-between items-center mb-8">
+      <div class="flex items-center space-x-4">
+        <h1 class="text-3xl font-bold text-slate-700">Calendario Contabilidad</h1>
+        <div class="relative group">
+          <i data-feather="bell" class="text-slate-500 hover:text-blue-600 cursor-pointer"></i>
+          <span id="notification-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full hidden">0</span>
+          <div id="notification-tooltip" class="absolute left-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl p-4 hidden group-hover:block z-50">
+            <h4 class="font-bold text-sm mb-2 border-b border-slate-200 pb-2">Tareas para Mañana</h4>
+            <ul id="tooltip-list" class="text-sm text-slate-600 space-y-1 mt-2"></ul>
+          </div>
+        </div>
+      </div>
+      <button id="addEventBtn" class="mt-4 md:mt-0 w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-300 hover:shadow-xl hover:scale-105">+ Añadir Evento</button>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="lg:col-span-2 bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-4 md:p-6">
+        <div id='calendar'></div>
+      </div>
+      <aside class="bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-4 md:p-6">
+        <h2 class="text-xl font-bold text-slate-700 mb-4 border-b border-slate-200 pb-3">Lista de Tareas</h2>
+        <div id="tasksList" class="space-y-3 max-h-[70vh] overflow-y-auto pr-2"></div>
+      </aside>
+    </main>
+
+    <footer class="mt-8 bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-6">
+        <h3 class="text-lg font-bold text-slate-700 mb-4">Leyenda de Colores</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-semibold text-slate-600 mb-3">Usuarios</h4>
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full bg-orange-500"></div><span class="text-slate-700">Ronald</span></div>
+                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full bg-green-500"></div><span class="text-slate-700">Kevin</span></div>
+                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full bg-yellow-500"></div><span class="text-slate-700">Claudia</span></div>
+                </div>
+            </div>
+            <div>
+                <h4 class="font-semibold text-slate-600 mb-3">Prioridades</h4>
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg border border-slate-300" style="background-color: rgba(107, 114, 128, 0.3)"></div><span class="text-slate-700">Tentativa</span></div>
+                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg border border-slate-400" style="background-color: rgba(107, 114, 128, 0.7)"></div><span class="text-slate-700">Normal</span></div>
+                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg bg-slate-800"></div><span class="text-slate-700">Urgente</span></div>
+                </div>
+            </div>
+        </div>
+    </footer>
+  </div>
+
+  <!-- Modal para agregar/editar eventos -->
+  <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 relative">
+      <button id="xCloseModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 text-3xl font-light">&times;</button>
+      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-center text-slate-700"></h2>
+      <form id="eventForm" novalidate>
+        <input type="hidden" id="eventId">
+        <div class="space-y-5">
+            <div>
+                <label for="userName" class="block text-slate-600 text-sm font-bold mb-2">Responsable:</label>
+                <select id="userName" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <option value="" disabled>Selecciona tu nombre</option>
+                    <option value="Ronald">Ronald</option>
+                    <option value="Kevin">Kevin</option>
+                    <option value="Claudia">Claudia</option>
+                </select>
+            </div>
+            <div>
+                <label for="eventTitle" class="block text-slate-600 text-sm font-bold mb-2">Título del Evento:</label>
+                <input type="text" id="eventTitle" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="startDate" class="block text-slate-600 text-sm font-bold mb-2">Inicio:</label>
+                    <input type="datetime-local" id="startDate" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="endDate" class="block text-slate-600 text-sm font-bold mb-2">Fin (Opcional):</label>
+                    <input type="datetime-local" id="endDate" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div>
+                <label for="priority" class="block text-slate-600 text-sm font-bold mb-2">Prioridad:</label>
+                <select id="priority" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Tentative">Tentativa</option>
+                    <option value="Normal" selected>Normal</option>
+                    <option value="Urgent">Urgente</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex items-center justify-between space-x-4 mt-8">
+          <button type="button" id="deleteEventBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg hidden transition-colors">Eliminar</button>
+          <button type="submit" id="saveEventBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Guardar</button>
+        </div>
+         <button type="button" id="closeModalBtn" class="mt-4 text-center w-full text-slate-500 hover:text-slate-700">Cancelar</button>
+      </form>
+    </div>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>

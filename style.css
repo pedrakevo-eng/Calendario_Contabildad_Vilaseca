@@ -1,0 +1,64 @@
+/* Estilos Generales */
+body { 
+  font-family: 'Inter', sans-serif; 
+}
+
+/* Sistema de colores con variables CSS para eventos */
+.event-ronald { --user-color-rgb: 249, 115, 22; } /* Naranja */
+.event-kevin { --user-color-rgb: 34, 197, 94; }   /* Verde */
+.event-claudia { --user-color-rgb: 234, 179, 8; }  /* Amarillo */
+.event-default { --user-color-rgb: 107, 114, 128; } /* Gris */
+
+.fc-event { 
+  color: #1f2937 !important; 
+  cursor: pointer;
+  border-radius: 6px !important;
+  padding: 4px 6px !important;
+  font-weight: 500;
+}
+
+.event-tentative { 
+  background-color: rgba(var(--user-color-rgb), 0.3) !important; 
+  border: 1px solid rgba(var(--user-color-rgb), 0.5) !important; 
+}
+.event-normal { 
+  background-color: rgba(var(--user-color-rgb), 0.7) !important; 
+  border: 1px solid rgba(var(--user-color-rgb), 1) !important; 
+}
+.event-urgent { 
+  background-color: rgb(var(--user-color-rgb)) !important; 
+  border: 1px solid rgb(var(--user-color-rgb)) !important; 
+  color: white !important; 
+  font-weight: 600; 
+}
+
+/* Estilos para el Modal y Notificaciones */
+#eventModal { 
+  transition: opacity 0.3s ease; 
+  z-index: 100; 
+}
+#notification { 
+  transition: transform 0.5s ease-in-out; 
+  z-index: 200; 
+}
+
+/* Animación para el punto brillante de tareas próximas */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.glowing-dot {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Pequeñas mejoras de UI */
+#tasksList > div {
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, border-color 0.3s ease;
+    border-left: 4px solid transparent;
+}
+#tasksList > div:hover {
+    transform: translateX(4px);
+}
+.user-task {
+    border-left-color: #3b82f6; /* Tailwind blue-500 */
+}
