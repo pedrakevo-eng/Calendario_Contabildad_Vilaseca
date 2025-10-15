@@ -152,13 +152,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatEventsForCalendar(events) {
-        return events.map(event => ({
-            id: event.id,
-            title: `${event.priority === 'Urgent' ? '❗ ' : ''}${event.title}`,
-            start: event.start,
-            end: event.end,
-            extendedProps: { ...event }
-        }));
+        return events.map(event => {
+            let titlePrefix = '';
+            if (event.priority === 'Urgent') titlePrefix = '❗ ';
+            else if (event.priority === 'Pendiente') titlePrefix = '⏳ ';
+
+            return {
+                id: event.id,
+                title: `${titlePrefix}${event.title}`,
+                start: event.start,
+                end: event.end,
+                extendedProps: { ...event }
+            };
+        });
     }
 
     function updateTasksList(events) {
@@ -197,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let priorityIcon = '';
             if (event.priority === 'Urgent') priorityIcon = `<i data-feather="alert-triangle" class="text-red-500 h-4 w-4"></i>`;
             else if (event.priority === 'Tentative') priorityIcon = `<i data-feather="clock" class="text-yellow-500 h-4 w-4"></i>`;
+            else if (event.priority === 'Pendiente') priorityIcon = `<i data-feather="pause-circle" class="text-purple-500 h-4 w-4"></i>`;
             
             eventEl.innerHTML = `
                 <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center ${isPast ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-700'} font-bold rounded-full">${index + 1}</div>
@@ -272,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.textContent = 'Editar Evento';
         document.getElementById('eventId').value = id;
         document.getElementById('userName').value = user;
-        document.getElementById('eventTitle').value = title.replace('❗ ', '');
+        document.getElementById('eventTitle').value = title.replace('❗ ', '').replace('⏳ ', '');
         document.getElementById('startDate').value = toLocalISOString(new Date(start));
         document.getElementById('endDate').value = end ? toLocalISOString(new Date(end)) : '';
         document.getElementById('priority').value = priority;

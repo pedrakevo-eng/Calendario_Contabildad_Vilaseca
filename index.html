@@ -5,28 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calendario Contabilidad</title>
   
-  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Librerías Externas -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Nuestros Estilos -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-slate-50 text-slate-800">
 
-  <!-- Barra de Notificaciones -->
   <div id="notification" class="fixed top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-green-500 text-white py-3 px-6 rounded-b-lg shadow-xl">
     <span id="notification-text"></span>
   </div>
 
-  <!-- Contenedor Principal -->
   <div class="container mx-auto p-4 md:p-8">
     <header class="flex flex-col md:flex-row justify-between items-center mb-8">
       <div class="flex items-center space-x-4">
@@ -67,6 +62,7 @@
             <div>
                 <h4 class="font-semibold text-slate-600 mb-3">Prioridades</h4>
                 <div class="space-y-2">
+                    <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg border-2 border-dashed border-slate-300" style="background-color: rgba(107, 114, 128, 0.15)"></div><span class="text-slate-700">Pendiente</span></div>
                     <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg border border-slate-300" style="background-color: rgba(107, 114, 128, 0.3)"></div><span class="text-slate-700">Tentativa</span></div>
                     <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg border border-slate-400" style="background-color: rgba(107, 114, 128, 0.7)"></div><span class="text-slate-700">Normal</span></div>
                     <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-lg bg-slate-800"></div><span class="text-slate-700">Urgente</span></div>
@@ -74,9 +70,12 @@
             </div>
         </div>
     </footer>
+    
+    <div class="text-center mt-8 text-sm text-slate-500">
+        <p>&copy; 2025 Contabilidad KHI. Todos los derechos reservados.</p>
+    </div>
   </div>
 
-  <!-- Modal para agregar/editar eventos -->
   <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 relative">
       <button id="xCloseModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 text-3xl font-light">&times;</button>
@@ -110,6 +109,7 @@
             <div>
                 <label for="priority" class="block text-slate-600 text-sm font-bold mb-2">Prioridad:</label>
                 <select id="priority" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Pendiente">Pendiente</option>
                     <option value="Tentative">Tentativa</option>
                     <option value="Normal" selected>Normal</option>
                     <option value="Urgent">Urgente</option>

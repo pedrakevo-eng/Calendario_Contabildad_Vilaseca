@@ -17,6 +17,11 @@ body {
   font-weight: 500;
 }
 
+.event-pendiente {
+  background-color: rgba(var(--user-color-rgb), 0.15) !important;
+  border: 1px dashed rgba(var(--user-color-rgb), 0.6) !important;
+  color: #374151 !important; /* Texto un poco más oscuro para legibilidad */
+}
 .event-tentative { 
   background-color: rgba(var(--user-color-rgb), 0.3) !important; 
   border: 1px solid rgba(var(--user-color-rgb), 0.5) !important; 
