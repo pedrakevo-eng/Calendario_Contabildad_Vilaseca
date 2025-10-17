@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tooltipList = document.getElementById('tooltip-list');
     const tasksToggle = document.getElementById('tasksToggle');
     const prioritySelect = document.getElementById('priority');
+    const darkModeToggle = document.getElementById('darkModeToggle');
     
     // Modal de confirmación
     const confirmModal = document.getElementById('confirmModal');
@@ -41,19 +42,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeRecurringModalBtn = document.getElementById('closeRecurringModalBtn');
     const xCloseRecurringModalBtn = document.getElementById('xCloseRecurringModalBtn');
 
-
     let calendar;
     let allEvents = [];
     let currentTaskView = 'upcoming';
+    let userEventSource = null;
+
+    const holidays = [
+        { title: 'Año Nuevo', date: '2025-01-01', allDay: true, classNames: ['holiday-event', 'holiday-ano-nuevo'] },
+        { title: 'Estado Plurinacional', date: '2025-01-22', allDay: true, classNames: ['holiday-event', 'holiday-plurinacional'] },
+        { title: 'Lunes de Carnaval', date: '2025-03-03', allDay: true, classNames: ['holiday-event', 'holiday-carnaval'] },
+        { title: 'Martes de Carnaval', date: '2025-03-04', allDay: true, classNames: ['holiday-event', 'holiday-carnaval'] },
+        { title: 'Viernes Santo', date: '2025-04-18', allDay: true, classNames: ['holiday-event', 'holiday-viernes-santo'] },
+        { title: 'Día del Trabajo', date: '2025-05-01', allDay: true, classNames: ['holiday-event', 'holiday-trabajo'] },
+        { title: 'Corpus Christi', date: '2025-06-19', allDay: true, classNames: ['holiday-event', 'holiday-corpus'] },
+        { title: 'Año Nuevo Aymara', date: '2025-06-21', allDay: true, classNames: ['holiday-event', 'holiday-aymara'] },
+        { title: 'Día de la Independencia', date: '2025-08-06', allDay: true, classNames: ['holiday-event', 'holiday-independencia'] },
+        { title: 'Día de Todos Santos', date: '2025-11-02', allDay: true, classNames: ['holiday-event', 'holiday-santos'] },
+        { title: 'Navidad', date: '2025-12-25', allDay: true, classNames: ['holiday-event', 'holiday-navidad'] },
+        { title: 'Año Nuevo', date: '2026-01-01', allDay: true, classNames: ['holiday-event', 'holiday-ano-nuevo'] },
+        { title: 'Estado Plurinacional', date: '2026-01-22', allDay: true, classNames: ['holiday-event', 'holiday-plurinacional'] },
+        { title: 'Lunes de Carnaval', date: '2026-02-16', allDay: true, classNames: ['holiday-event', 'holiday-carnaval'] },
+        { title: 'Martes de Carnaval', date: '2026-02-17', allDay: true, classNames: ['holiday-event', 'holiday-carnaval'] },
+        { title: 'Viernes Santo', date: '2026-04-03', allDay: true, classNames: ['holiday-event', 'holiday-viernes-santo'] },
+        { title: 'Día del Trabajo', date: '2026-05-01', allDay: true, classNames: ['holiday-event', 'holiday-trabajo'] },
+        { title: 'Corpus Christi', date: '2026-06-04', allDay: true, classNames: ['holiday-event', 'holiday-corpus'] },
+        { title: 'Año Nuevo Aymara', date: '2026-06-22', allDay: true, classNames: ['holiday-event', 'holiday-aymara'] },
+        { title: 'Día de la Independencia', date: '2026-08-06', allDay: true, classNames: ['holiday-event', 'holiday-independencia'] },
+        { title: 'Día de Todos Santos', date: '2026-11-02', allDay: true, classNames: ['holiday-event', 'holiday-santos'] },
+        { title: 'Navidad', date: '2026-12-25', allDay: true, classNames: ['holiday-event', 'holiday-navidad'] },
+    ];
 
     // --- 3. LÓGICA PRINCIPAL ---
     async function initializeApp() {
         if (!calendarEl) {
             console.error("Calendar element #calendar not found.");
-            alert("Error: El elemento del calendario no se encuentra en la página.");
             return;
         }
         feather.replace(); 
+        loadDarkModePreference();
         initializeCalendar();
         await fetchAndRenderEvents();
         listenForRealtimeChanges();
@@ -81,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (eventId) await deleteEvent(eventId);
         });
         
-        // Listeners para eventos recurrentes
         addRecurringBtn.addEventListener('click', openRecurringModal);
         closeRecurringModalBtn.addEventListener('click', closeRecurringModal);
         xCloseRecurringModalBtn.addEventListener('click', closeRecurringModal);
@@ -97,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tasksToggle.addEventListener('click', (e) => {
             const view = e.target.dataset.view;
-            if (view) {
+            if (view && view !== currentTaskView) {
                 currentTaskView = view;
                 updateTasksList(allEvents);
                 updateTaskViewToggle();
@@ -107,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         prioritySelect.addEventListener('change', (e) => updatePrioritySelectColor(e.target, e.target.value));
         document.getElementById('recurringPriority').addEventListener('change', (e) => updatePrioritySelectColor(e.target, e.target.value));
 
+        darkModeToggle.addEventListener('click', toggleDarkMode);
     }
 
     // --- 5. FUNCIONES DE SUPABASE Y TIEMPO REAL ---
@@ -118,8 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         allEvents = data;
-        calendar.removeAllEvents();
-        calendar.addEventSource(formatEventsForCalendar(allEvents));
+        
+        if (userEventSource) userEventSource.remove();
+        userEventSource = calendar.addEventSource(formatEventsForCalendar(allEvents));
+        
         updateTasksList(allEvents);
         updateNotificationBell(allEvents);
     }
@@ -150,12 +178,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        let error;
-        if (eventId) {
-            ({ error } = await supabaseClient.from('events').update(eventData).eq('id', eventId));
-        } else {
-            ({ error } = await supabaseClient.from('events').insert([eventData]));
-        }
+        const { error } = eventId
+            ? await supabaseClient.from('events').update(eventData).eq('id', eventId)
+            : await supabaseClient.from('events').insert([eventData]);
 
         if (error) {
             showNotification(`Error: ${error.message}`, true);
@@ -180,38 +205,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const newEvents = [];
         const today = new Date();
-        
-        // Generar eventos para los próximos 12 meses
-        for (let i = 0; i < 12; i++) {
-            let targetDate = new Date(today.getFullYear(), today.getMonth() + i, dayOfMonth, 12, 0, 0); // Fijar hora a mediodía para evitar problemas de zona horaria
+        const monthsToGenerate = (dayOfMonth === 31) ? 6 : 12;
 
-            let dayOfWeek = targetDate.getDay();
+        for (let i = 0; i < monthsToGenerate; i++) {
+            const currentMonthDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            const year = currentMonthDate.getFullYear();
+            const month = currentMonthDate.getMonth();
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const targetDay = Math.min(dayOfMonth, daysInMonth);
+
+            let eventDate = new Date(year, month, targetDay, 12, 0, 0);
+            let dayOfWeek = eventDate.getDay(); 
             
-            // Si es Sábado (6), retrocede 1 día al Viernes.
-            if (dayOfWeek === 6) {
-                targetDate.setDate(targetDate.getDate() - 1);
-            } 
-            // Si es Domingo (0), retrocede 2 días al Viernes.
-            else if (dayOfWeek === 0) {
-                targetDate.setDate(targetDate.getDate() - 2);
+            if (dayOfWeek === 6) { // Saturday
+                eventDate.setDate(eventDate.getDate() - 1);
+            } else if (dayOfWeek === 0) { // Sunday
+                eventDate.setDate(eventDate.getDate() - 2);
             }
-
-            const eventData = {
+            
+            newEvents.push({
                 user: user,
                 title: `Cierre - ${clientName}`,
-                start: targetDate.toISOString(),
+                start: eventDate.toISOString(),
                 priority: priority,
-                notes: `Cierre mensual automático para el día ${dayOfMonth}.`
-            };
-            newEvents.push(eventData);
+                notes: `Cierre mensual para el día ${dayOfMonth}.`
+            });
         }
 
         const { error } = await supabaseClient.from('events').insert(newEvents);
-
         if (error) {
             showNotification(`Error al crear cierres: ${error.message}`, true);
         } else {
-            showNotification(`Se generaron 12 eventos de cierre para ${clientName}.`, false);
+            showNotification(`Se generaron ${monthsToGenerate} cierres para ${clientName}.`, false);
             closeRecurringModal();
         }
     }
@@ -235,28 +261,36 @@ document.addEventListener('DOMContentLoaded', () => {
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
             locale: 'es',
             buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', list: 'Agenda' },
+            eventSources: [{ events: holidays, editable: false }],
             eventClassNames: (arg) => {
-                const user = (arg.event.extendedProps.user || 'default').toLowerCase().replace(/\s+/g, '-');
-                const priority = (arg.event.extendedProps.priority || 'default').toLowerCase();
-                return [`event-${user}`, `event-${priority}`];
+                if(arg.event.extendedProps.user) {
+                    const user = (arg.event.extendedProps.user || 'default').toLowerCase().replace(/\s+/g, '-');
+                    const priority = (arg.event.extendedProps.priority || 'default').toLowerCase();
+                    return [`event-${user}`, `event-${priority}`];
+                }
+                return [];
             },
             eventDidMount: (info) => {
-                tippy(info.el, {
-                    content: createTooltipContent(info.event),
-                    allowHTML: true, theme: 'custom', placement: 'top', animation: 'shift-away',
-                });
+                if(info.event.extendedProps.user) {
+                    tippy(info.el, {
+                        content: createTooltipContent(info.event),
+                        allowHTML: true, theme: 'custom', placement: 'top', animation: 'shift-away',
+                    });
+                }
             },
             dateClick: (info) => openModalForNew(info.date),
-            eventClick: (info) => openModalForEdit(info.event),
+            eventClick: (info) => {
+                if(info.event.extendedProps.user) openModalForEdit(info.event)
+            },
         });
         calendar.render();
     }
 
     function createTooltipContent(event) {
-        const props = event.extendedProps;
-        const startDate = new Date(event.start).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
-        const endDate = event.end ? new Date(event.end).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
-        return `<div class="tooltip-content"><div class="tooltip-title">${props.title}</div><div class="tooltip-body"><p><strong>Responsable:</strong> ${props.user}</p><p><strong>Prioridad:</strong> ${props.priority}</p><p><strong>Inicio:</strong> ${startDate}</p><p><strong>Fin:</strong> ${endDate}</p>${props.notes ? `<p><strong>Notas:</strong> ${props.notes}</p>` : ''}</div></div>`;
+        const { user, priority, notes } = event.extendedProps;
+        const start = new Date(event.start).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+        const end = event.end ? new Date(event.end).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+        return `<div class="tooltip-content"><div class="tooltip-title">${event.title}</div><div class="tooltip-body"><p><strong>Responsable:</strong> ${user}</p><p><strong>Prioridad:</strong> ${priority}</p><p><strong>Inicio:</strong> ${start}</p><p><strong>Fin:</strong> ${end}</p>${notes ? `<p><strong>Notas:</strong> ${notes}</p>` : ''}</div></div>`;
     }
 
     function formatEventsForCalendar(events) {
@@ -266,18 +300,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateTasksList(events) {
         const currentUser = localStorage.getItem('calendarUserName');
         const now = new Date();
-        const filteredEvents = events.filter(event => new Date(event.start) >= now).sort((a, b) => new Date(a.start) - new Date(b.start));
+        const filteredEvents = currentTaskView === 'past'
+            ? events.filter(e => new Date(e.start) < now).sort((a, b) => new Date(b.start) - new Date(a.start))
+            : events.filter(e => new Date(e.start) >= now).sort((a, b) => new Date(a.start) - new Date(b.start));
+
         tasksList.innerHTML = '';
         if (filteredEvents.length === 0) {
-            tasksList.innerHTML = `<p class="text-center text-slate-500 mt-4">No hay tareas próximas.</p>`;
+            tasksList.innerHTML = `<p class="text-center text-slate-500 mt-4">No hay tareas ${currentTaskView === 'past' ? 'pasadas' : 'próximas'}.</p>`;
             return;
         }
+
         filteredEvents.forEach((event) => {
-            const eventEl = document.createElement('div');
-            eventEl.className = `relative flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 border-l-4 ${event.user === currentUser ? 'bg-blue-50' : 'hover:bg-slate-50'} priority-border-${event.priority}`;
-            eventEl.onclick = () => { if(calendar.getEventById(event.id)) openModalForEdit(calendar.getEventById(event.id)); };
-            eventEl.innerHTML = `<div class="flex-grow overflow-hidden"><p class="font-bold text-slate-800 truncate">${event.title}</p><p class="text-sm text-slate-500">${new Date(event.start).toLocaleString('es-ES', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'})}</p><div class="flex items-center space-x-2 mt-1 text-xs"><span class="font-semibold text-slate-600">${event.user}</span>${event.notes ? `<i data-feather="file-text" class="h-4 w-4 text-slate-400" title="${event.notes}"></i>` : ''}</div></div>`;
-            tasksList.appendChild(eventEl);
+            const el = document.createElement('div');
+            el.className = `relative flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 border-l-4 ${event.user === currentUser ? 'bg-blue-50' : 'hover:bg-slate-50'} priority-border-${event.priority}`;
+            el.onclick = () => { if(calendar.getEventById(event.id)) openModalForEdit(calendar.getEventById(event.id)); };
+            el.innerHTML = `<div class="flex-grow overflow-hidden"><p class="font-bold text-slate-800 truncate">${event.title}</p><p class="text-sm text-slate-500">${new Date(event.start).toLocaleString('es-ES', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'})}</p><div class="flex items-center space-x-2 mt-1 text-xs"><span class="font-semibold text-slate-600">${event.user}</span>${event.notes ? `<i data-feather="file-text" class="h-4 w-4 text-slate-400" title="${event.notes}"></i>` : ''}</div></div>`;
+            tasksList.appendChild(el);
         });
         feather.replace();
     }
@@ -287,10 +325,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const endOfTomorrow = new Date();
         endOfTomorrow.setDate(now.getDate() + 1);
         endOfTomorrow.setHours(23, 59, 59, 999);
-        const upcomingEvents = events.filter(event => new Date(event.start) >= now && new Date(event.start) <= endOfTomorrow);
-        notificationBadge.textContent = upcomingEvents.length;
-        notificationBadge.classList.toggle('hidden', upcomingEvents.length === 0);
-        tooltipList.innerHTML = upcomingEvents.length > 0 ? upcomingEvents.map(e => `<li class="truncate">• ${e.title} (${e.user})</li>`).join('') : '<li class="text-slate-400">Nada para hoy o mañana.</li>';
+        const upcoming = events.filter(e => new Date(e.start) >= now && new Date(e.start) <= endOfTomorrow);
+        notificationBadge.textContent = upcoming.length;
+        notificationBadge.classList.toggle('hidden', upcoming.length === 0);
+        tooltipList.innerHTML = upcoming.length > 0 ? upcoming.map(e => `<li class="truncate">• ${e.title} (${e.user})</li>`).join('') : '<li class="text-slate-400">Nada para hoy o mañana.</li>';
     }
 
     function showNotification(message, isError = false) {
@@ -303,18 +341,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function toLocalISOString(date) {
         if (!date) return '';
         const d = new Date(date);
-        if (isNaN(d.getTime())) return '';
-        return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        return isNaN(d.getTime()) ? '' : new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
     }
     
     function updateTaskViewToggle() {
-        document.querySelectorAll('#tasksToggle button').forEach(btn => btn.classList.toggle('active-view', btn.dataset.view === currentTaskView));
+        document.querySelectorAll('#tasksToggle button').forEach(btn => {
+            btn.classList.toggle('active-view', btn.dataset.view === currentTaskView);
+        });
     }
 
-    function updatePrioritySelectColor(selectElement, priority) {
-        const classes = ['priority-select-Pendiente', 'priority-select-Tentative', 'priority-select-Normal', 'priority-select-Urgent'];
-        selectElement.classList.remove(...classes);
-        if (priority) selectElement.classList.add(`priority-select-${priority}`);
+    function updatePrioritySelectColor(el, priority) {
+        el.classList.remove('priority-select-Pendiente', 'priority-select-Tentative', 'priority-select-Normal', 'priority-select-Urgent');
+        if (priority) el.classList.add(`priority-select-${priority}`);
     }
 
     function openModalForNew(date) {
@@ -325,8 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('eventId').value = '';
         document.getElementById('startDate').value = toLocalISOString(date || new Date());
         userNameSelect.value = localStorage.getItem('calendarUserName') || '';
-        prioritySelect.value = 'Normal';
         updatePrioritySelectColor(prioritySelect, 'Normal');
+        prioritySelect.value = 'Normal';
         modal.classList.remove('hidden');
     }
 
@@ -340,8 +378,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('userName').value = user;
         document.getElementById('eventTitle').value = title;
         document.getElementById('startDate').value = toLocalISOString(new Date(start));
-        document.getElementById('endDate').value = end ? toLocalISOString(new Date(end)) : '';
-        prioritySelect.value = priority;
+        document.getElementById('endDate').value = toLocalISOString(end ? new Date(end) : null);
+        document.getElementById('priority').value = priority;
         document.getElementById('eventNotes').value = notes || '';
         updatePrioritySelectColor(prioritySelect, priority);
         modal.classList.remove('hidden');
@@ -364,13 +402,37 @@ document.addEventListener('DOMContentLoaded', () => {
     function openRecurringModal() {
         recurringEventForm.reset();
         document.getElementById('recurringUserName').value = localStorage.getItem('calendarUserName') || '';
-        document.getElementById('recurringPriority').value = 'Normal';
         updatePrioritySelectColor(document.getElementById('recurringPriority'), 'Normal');
+        document.getElementById('recurringPriority').value = 'Normal';
         recurringModal.classList.remove('hidden');
     }
 
     function closeRecurringModal() {
         recurringModal.classList.add('hidden');
+    }
+
+    function toggleDarkMode() {
+        const html = document.documentElement;
+        html.classList.toggle('dark');
+        
+        if (html.classList.contains('dark')) {
+            localStorage.setItem('darkMode', 'enabled');
+            darkModeToggle.innerHTML = `<i data-feather="sun" class="text-slate-300"></i>`;
+        } else {
+            localStorage.removeItem('darkMode');
+            darkModeToggle.innerHTML = `<i data-feather="moon" class="text-slate-600"></i>`;
+        }
+        feather.replace();
+    }
+
+    function loadDarkModePreference() {
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.documentElement.classList.add('dark');
+            darkModeToggle.innerHTML = `<i data-feather="sun" class="text-slate-300"></i>`;
+        } else {
+            darkModeToggle.innerHTML = `<i data-feather="moon" class="text-slate-600"></i>`;
+        }
+        feather.replace();
     }
 });
 
