@@ -5,225 +5,1017 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calendario Contabilidad</title>
   
+  <!-- Fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
+  <!-- Librerías -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: '#3b82f6', // Azul estándar
+            slate: {
+              850: '#1e293b', // Personalizado para modo oscuro
+            }
+          }
+        }
+      }
+    }
+  </script>
   <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Tooltip Library -->
+  <!-- Tooltips -->
   <script src="https://unpkg.com/@popperjs/core@2"></script>
   <script src="https://unpkg.com/tippy.js@6"></script>
 
-  <link rel="stylesheet" href="style.css">
-</head>
-<body class="bg-slate-50 text-slate-800">
+  <style>
+    /* --- ESTILOS GENERALES MEJORADOS --- */
+    :root {
+      --fc-border-color: #e2e8f0;
+      --fc-button-text-color: #fff;
+      --fc-button-bg-color: #3b82f6;
+      --fc-button-border-color: #3b82f6;
+      --fc-button-hover-bg-color: #2563eb;
+      --fc-button-hover-border-color: #2563eb;
+      --fc-button-active-bg-color: #1d4ed8;
+      --fc-button-active-border-color: #1d4ed8;
+      --fc-today-bg-color: rgba(59, 130, 246, 0.05);
+      --fc-now-indicator-color: #ef4444;
+    }
 
-  <div id="notification" class="fixed top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-green-500 text-white py-3 px-6 rounded-b-lg shadow-xl z-50">
-    <span id="notification-text"></span>
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background-color: #f8fafc; /* Un gris azulado muy suave */
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- CUSTOM SCROLLBAR --- */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1; 
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8; 
+    }
+    html.dark ::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+
+    /* --- FULLCALENDAR OVERRIDES (DISEÑO PRO) --- */
+    #calendar {
+      min-height: 75vh;
+    }
+
+    /* Header del calendario */
+    .fc-header-toolbar {
+      margin-bottom: 1.5rem !important;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .fc-toolbar-title {
+      font-size: 1.5rem !important;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    /* Botones del calendario */
+    .fc-button {
+      border-radius: 0.5rem !important;
+      font-weight: 500 !important;
+      text-transform: capitalize;
+      padding: 0.4rem 1rem !important;
+      font-size: 0.875rem !important;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      transition: all 0.2s;
+    }
+    .fc-button:focus {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important; 
+    }
+
+    /* Tabla del calendario */
+    .fc-theme-standard td, .fc-theme-standard th {
+      border-color: #f1f5f9 !important; /* Bordes muy sutiles */
+    }
+    .fc-col-header-cell-cushion {
+      padding: 12px 0 !important;
+      color: #64748b;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    .fc-daygrid-day-number {
+      font-size: 0.9rem;
+      color: #475569;
+      padding: 8px 12px !important;
+      font-weight: 500;
+    }
+
+    /* Eventos */
+    .fc-event {
+      border: none !important;
+      border-left: 4px solid !important; /* Mantenemos tu lógica visual */
+      border-radius: 4px !important;
+      padding: 3px 6px !important;
+      font-size: 0.75rem !important;
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 2px !important;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .fc-event:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 5;
+    }
+
+    /* --- LÓGICA DE COLORES DE USUARIO (INTACTA) --- */
+    .event-ronald-conde { background-color: rgba(159, 28, 43, 0.9) !important; color: white !important; }
+    .event-kevin-iturri { background-color: rgba(22, 105, 62, 0.9) !important; color: white !important; }
+    .event-claudia-gutierrez { background-color: rgba(236, 72, 153, 0.9) !important; color: white !important; }
+    .event-default { background-color: #64748b !important; color: white !important; }
+
+    /* --- LÓGICA DE BORDES DE PRIORIDAD (INTACTA) --- */
+    .event-urgent { border-left-color: #ef4444 !important; } 
+    .event-normal { border-left-color: #22c55e !important; } 
+    .event-tentative { border-left-color: #eab308 !important; } 
+    .event-pendiente { border-left-color: #a855f7 !important; }
+
+    /* --- TAREAS LIST STYLES --- */
+    #tasksToggle button {
+      color: #64748b;
+      transition: all 0.2s;
+    }
+    #tasksToggle button:hover {
+      background-color: #f1f5f9;
+      color: #334155;
+    }
+    #tasksToggle .active-view {
+      background-color: white !important;
+      color: #3b82f6 !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Borde de Prioridad en Lista (Consistencia) */
+    .priority-border-Pendiente { border-left-color: #a855f7 !important; }
+    .priority-border-Tentative { border-left-color: #eab308 !important; }
+    .priority-border-Normal { border-left-color: #22c55e !important; }
+    .priority-border-Urgent { border-left-color: #ef4444 !important; }
+
+    /* --- SELECTS DE PRIORIDAD (MEJORADOS) --- */
+    select#priority option, select#recurringPriority option {
+        background-color: white;
+        color: #1e293b;
+        padding: 10px;
+    }
+    .priority-select-Pendiente { background-color: #f3e8ff !important; border-color: #d8b4fe !important; color: #6b21a8 !important; }
+    .priority-select-Tentative { background-color: #fef9c3 !important; border-color: #fde047 !important; color: #854d0e !important; }
+    .priority-select-Normal { background-color: #dcfce7 !important; border-color: #86efac !important; color: #14532d !important; }
+    .priority-select-Urgent { background-color: #fee2e2 !important; border-color: #fca5a5 !important; color: #991b1b !important; }
+
+    /* --- FERIADOS --- */
+    .fc-daygrid-event.holiday-event {
+      background: transparent !important; /* Override para que se vea el gradiente */
+      border: none !important;
+      font-weight: 700 !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      border-radius: 4px;
+    }
+    .holiday-navidad { background: linear-gradient(135deg, #ef4444, #15803d) !important; }
+    .holiday-ano-nuevo { background: linear-gradient(135deg, #eab308, #f59e0b) !important; color: #fff !important; }
+    .holiday-carnaval { background: linear-gradient(135deg, #a855f7, #ec4899) !important; }
+    .holiday-independencia { background: linear-gradient(180deg, #ef4444 33%, #eab308 33%, #eab308 66%, #15803d 66%) !important; }
+    .holiday-plurinacional, .holiday-aymara { background: linear-gradient(45deg, #3b82f6, #ef4444, #eab308, #15803d) !important; }
+    .holiday-viernes-santo, .holiday-corpus, .holiday-santos { background-color: #7e22ce !important; }
+    .holiday-trabajo { background-color: #b91c1c !important; }
+
+    /* --- TOOLTIP --- */
+    .tippy-box[data-theme~='custom'] {
+      background-color: #1e293b;
+      color: #f8fafc;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    .tooltip-title {
+      font-weight: 700;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    /* --- DARK MODE --- */
+    html.dark body { background-color: #0f172a; color: #e2e8f0; }
+    html.dark .bg-white { background-color: #1e293b !important; }
+    html.dark .text-slate-700 { color: #e2e8f0 !important; }
+    html.dark .text-slate-600 { color: #cbd5e1 !important; }
+    html.dark .text-slate-500 { color: #94a3b8 !important; }
+    html.dark .border-slate-200 { border-color: #334155 !important; }
+    html.dark .border-slate-300 { border-color: #475569 !important; }
+    html.dark .bg-slate-50 { background-color: #0f172a !important; }
+    html.dark .bg-slate-100 { background-color: #334155 !important; }
+    
+    html.dark .fc-toolbar-title { color: #f1f5f9; }
+    html.dark .fc-theme-standard td, html.dark .fc-theme-standard th { border-color: #334155 !important; }
+    html.dark .fc-daygrid-day-number { color: #cbd5e1; }
+    html.dark .fc-col-header-cell-cushion { color: #94a3b8; }
+    
+    html.dark .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5); }
+    
+    html.dark input, html.dark select, html.dark textarea {
+      background-color: #0f172a;
+      border-color: #475569;
+      color: white;
+    }
+    html.dark input:focus, html.dark select:focus, html.dark textarea:focus {
+      border-color: #3b82f6;
+      ring-color: #3b82f6;
+    }
+    
+    html.dark #tasksToggle .active-view {
+      background-color: #3b82f6 !important;
+      color: white !important;
+    }
+    html.dark #tasksToggle button:hover {
+      background-color: #334155;
+      color: white;
+    }
+  </style>
+</head>
+<body class="antialiased transition-colors duration-300">
+
+  <!-- Notificación -->
+  <div id="notification" class="fixed top-0 left-1/2 -translate-x-1/2 -translate-y-full z-[100] transition-transform duration-500 ease-in-out">
+    <div class="bg-green-600 text-white py-3 px-6 rounded-b-xl shadow-lg flex items-center gap-2">
+        <i data-feather="check-circle" class="w-5 h-5"></i>
+        <span id="notification-text" class="font-medium"></span>
+    </div>
   </div>
 
-  <div class="container mx-auto p-4 md:p-8">
-    <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+  <div class="container mx-auto p-4 lg:p-8 max-w-7xl">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
       <div class="flex items-center space-x-4">
-        <h1 class="text-3xl font-bold text-slate-700">Calendario Contabilidad</h1>
-        <div class="relative group">
-          <i data-feather="bell" class="text-slate-500 hover:text-blue-600 cursor-pointer"></i>
-          <span id="notification-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full hidden">0</span>
-          <div id="notification-tooltip" class="absolute left-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl p-4 hidden group-hover:block z-50">
-            <h4 class="font-bold text-sm mb-2 border-b border-slate-200 pb-2">Tareas para Hoy y Mañana</h4>
-            <ul id="tooltip-list" class="text-sm text-slate-600 space-y-1 mt-2"></ul>
+        <div class="bg-blue-600 text-white p-2 rounded-lg shadow-lg shadow-blue-500/30">
+            <i data-feather="calendar" class="w-8 h-8"></i>
+        </div>
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight dark:text-white">Calendario Contabilidad</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Gestión de eventos y cierres</p>
+        </div>
+        
+        <!-- Notificaciones Bell -->
+        <div class="relative group ml-4">
+          <div class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+              <i data-feather="bell" class="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 w-6 h-6"></i>
+          </div>
+          <span id="notification-badge" class="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900 font-bold hidden shadow-sm">0</span>
+          
+          <!-- Dropdown Notificaciones -->
+          <div id="notification-tooltip" class="absolute left-0 md:left-auto md:-right-2 top-full mt-2 w-80 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl shadow-2xl p-0 hidden group-hover:block z-50 overflow-hidden transform origin-top-right transition-all">
+            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 border-b border-slate-100 dark:border-slate-700">
+                <h4 class="font-bold text-sm text-slate-700 dark:text-slate-200">Tareas para Hoy y Mañana</h4>
+            </div>
+            <ul id="tooltip-list" class="text-sm text-slate-600 dark:text-slate-300 p-3 space-y-2 max-h-64 overflow-y-auto"></ul>
           </div>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button id="darkModeToggle" class="p-2 rounded-lg hover:bg-slate-200 transition-colors">
-            <i data-feather="moon" class="text-slate-600"></i>
+
+      <!-- Acciones Globales -->
+      <div class="flex flex-wrap items-center gap-3 justify-center md:justify-end w-full md:w-auto">
+        <button id="darkModeToggle" class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors shadow-sm" title="Cambiar tema">
+            <i data-feather="moon" class="w-5 h-5"></i>
         </button>
-        <button id="addRecurringBtn" class="w-full md:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-teal-500/20 transition-all duration-300 hover:shadow-xl hover:scale-105">+ Añadir Cierre Mensual</button>
-        <button id="addEventBtn" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-300 hover:shadow-xl hover:scale-105">+ Añadir Evento</button>
+        <button id="addRecurringBtn" class="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow-lg shadow-teal-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+            <i data-feather="repeat" class="w-4 h-4"></i>
+            <span>Cierre Mensual</span>
+        </button>
+        <button id="addEventBtn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow-lg shadow-blue-500/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+            <i data-feather="plus" class="w-4 h-4"></i>
+            <span>Nuevo Evento</span>
+        </button>
       </div>
     </header>
 
-    <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-2 bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-4 md:p-6">
-        <div id='calendar'></div>
+    <!-- Grid Principal -->
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <!-- Calendario -->
+      <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 p-2 md:p-6 transition-all">
+        <div id='calendar' class="font-sans"></div>
       </div>
-      <aside class="bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-4 md:p-6">
-        <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
-            <h2 class="text-xl font-bold text-slate-700">Lista de Tareas</h2>
-            <div id="tasksToggle" class="flex items-center border border-slate-300 rounded-lg p-0.5 bg-slate-100">
-                <button data-view="upcoming" class="px-3 py-1 text-sm font-semibold rounded-md transition-colors">Actuales</button>
-                <button data-view="past" class="px-3 py-1 text-sm font-semibold rounded-md transition-colors">Pasadas</button>
-            </div>
-        </div>
-        <div id="tasksList" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2"></div>
-      </aside>
-    </main>
-    
-    <!-- Leyenda de Colores -->
-    <section class="mt-8 bg-white rounded-3xl shadow-xl shadow-slate-200/70 p-6">
-      <h3 class="text-lg font-bold text-slate-700 mb-4">Leyenda de Colores</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Responsables -->
-          <div>
-              <h4 class="font-semibold text-slate-600 mb-3">Color de Fondo por Responsable</h4>
-              <div class="space-y-2">
-                  <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full" style="background-color: rgb(159, 28, 43);"></div><span class="text-slate-700">Ronald Conde</span></div>
-                  <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full" style="background-color: rgb(22, 105, 62);"></div><span class="text-slate-700">Kevin Iturri</span></div>
-                  <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-full" style="background-color: rgb(236, 72, 153);"></div><span class="text-slate-700">Claudia Gutierrez</span></div>
-              </div>
-          </div>
-          <!-- Prioridades -->
-          <div>
-              <h4 class="font-semibold text-slate-600 mb-3">Borde Izquierdo por Prioridad</h4>
-              <div class="space-y-2">
-                   <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-md bg-slate-200 flex-shrink-0" style="border-left: 5px solid #ef4444;"></div><span class="text-slate-700">Urgente</span></div>
-                   <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-md bg-slate-200 flex-shrink-0" style="border-left: 5px solid #22c55e;"></div><span class="text-slate-700">Normal</span></div>
-                   <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-md bg-slate-200 flex-shrink-0" style="border-left: 5px solid #eab308;"></div><span class="text-slate-700">Tentativa</span></div>
-                   <div class="flex items-center space-x-3"><div class="w-5 h-5 rounded-md bg-slate-200 flex-shrink-0" style="border-left: 5px solid #a855f7;"></div><span class="text-slate-700">Pendiente</span></div>
-              </div>
-          </div>
-      </div>
-    </section>
 
-    <!-- Derechos Reservados -->
-    <footer class="text-center mt-8 py-6">
-        <p class="text-sm text-slate-500">&copy; 2025 Vilaseca KIH Contabilidad. Todos los derechos reservados.</p>
+      <!-- Sidebar: Tareas y Leyenda -->
+      <div class="space-y-8">
+        <!-- Lista de Tareas -->
+        <aside class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 p-5 md:p-6 flex flex-col h-full max-h-[800px]">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <i data-feather="list" class="w-5 h-5 text-slate-400"></i>
+                    Lista de Tareas
+                </h2>
+                <div id="tasksToggle" class="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+                    <button data-view="upcoming" class="px-3 py-1.5 text-xs font-bold rounded-md active-view">Pendientes</button>
+                    <button data-view="past" class="px-3 py-1.5 text-xs font-bold rounded-md">Pasadas</button>
+                </div>
+            </div>
+            
+            <div id="tasksList" class="space-y-3 overflow-y-auto pr-1 custom-scrollbar flex-1">
+                <!-- El JS llenará esto -->
+            </div>
+        </aside>
+
+        <!-- Leyenda -->
+        <section class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 p-6">
+          <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Leyenda</h3>
+          <div class="space-y-6">
+              <!-- Responsables -->
+              <div>
+                  <h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3">Responsables</h4>
+                  <div class="grid grid-cols-1 gap-2">
+                      <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                          <div class="w-3 h-3 rounded-full shadow-sm" style="background-color: rgb(159, 28, 43);"></div>
+                          <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Ronald Conde</span>
+                      </div>
+                      <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                          <div class="w-3 h-3 rounded-full shadow-sm" style="background-color: rgb(22, 105, 62);"></div>
+                          <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Kevin Iturri</span>
+                      </div>
+                      <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                          <div class="w-3 h-3 rounded-full shadow-sm" style="background-color: rgb(236, 72, 153);"></div>
+                          <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Claudia Gutierrez</span>
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="border-t border-slate-100 dark:border-slate-700"></div>
+
+              <!-- Prioridades -->
+              <div>
+                  <h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3 mt-4">Prioridad (Borde Lateral)</h4>
+                  <div class="grid grid-cols-2 gap-2">
+                       <div class="flex items-center gap-2"><div class="w-1.5 h-4 rounded-full bg-red-500"></div><span class="text-xs text-slate-600 dark:text-slate-300">Urgente</span></div>
+                       <div class="flex items-center gap-2"><div class="w-1.5 h-4 rounded-full bg-green-500"></div><span class="text-xs text-slate-600 dark:text-slate-300">Normal</span></div>
+                       <div class="flex items-center gap-2"><div class="w-1.5 h-4 rounded-full bg-yellow-500"></div><span class="text-xs text-slate-600 dark:text-slate-300">Tentativa</span></div>
+                       <div class="flex items-center gap-2"><div class="w-1.5 h-4 rounded-full bg-purple-500"></div><span class="text-xs text-slate-600 dark:text-slate-300">Pendiente</span></div>
+                  </div>
+              </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center mt-12 py-6 border-t border-slate-200 dark:border-slate-800">
+        <p class="text-sm text-slate-400">&copy; 2025 Vilaseca KIH Contabilidad. Todos los derechos reservados.</p>
     </footer>
 
   </div>
 
   <!-- Modal para Añadir/Editar Evento -->
-  <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-40">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden">
+  <div id="eventModal" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center p-4 hidden z-[60] transition-opacity">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden transform transition-all scale-100 border border-slate-200 dark:border-slate-700">
       
-      <div class="flex items-center justify-between p-6 border-b border-slate-200 relative">
-        <h2 id="modalTitle" class="text-2xl font-bold text-slate-700 w-full text-center"></h2>
-        <button id="xCloseModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800 text-3xl font-light">&times;</button>
+      <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
+        <h2 id="modalTitle" class="text-lg font-bold text-slate-800 dark:text-white"></h2>
+        <button id="xCloseModalBtn" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+            <i data-feather="x" class="w-5 h-5"></i>
+        </button>
       </div>
 
-      <div class="p-6 overflow-y-auto">
+      <div class="p-6 overflow-y-auto custom-scrollbar">
         <form id="eventForm" novalidate>
           <input type="hidden" id="eventId">
           <div class="space-y-5">
+            <!-- Responsable -->
             <div>
-              <label for="userName" class="block text-slate-600 text-sm font-bold mb-2">Responsable:</label>
-              <select id="userName" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                <option value="" disabled>Selecciona tu nombre</option>
-                <option value="Ronald Conde">Ronald Conde</option>
-                <option value="Kevin Iturri">Kevin Iturri</option>
-                <option value="Claudia Gutierrez">Claudia Gutierrez</option>
-              </select>
-            </div>
-            <div>
-              <label for="eventTitle" class="block text-slate-600 text-sm font-bold mb-2">Título del Evento:</label>
-              <input type="text" id="eventTitle" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label for="startDate" class="block text-slate-600 text-sm font-bold mb-2">Inicio:</label>
-                <input type="datetime-local" id="startDate" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-              </div>
-              <div>
-                <label for="endDate" class="block text-slate-600 text-sm font-bold mb-2">Fin (Opcional):</label>
-                <input type="datetime-local" id="endDate" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <label for="userName" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Responsable</label>
+              <div class="relative">
+                  <select id="userName" class="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow appearance-none text-sm" required>
+                    <option value="" disabled>Selecciona tu nombre</option>
+                    <option value="Ronald Conde">Ronald Conde</option>
+                    <option value="Kevin Iturri">Kevin Iturri</option>
+                    <option value="Claudia Gutierrez">Claudia Gutierrez</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                    <i data-feather="chevron-down" class="w-4 h-4"></i>
+                  </div>
               </div>
             </div>
+            
+            <!-- Título -->
             <div>
-              <label for="priority" class="block text-slate-600 text-sm font-bold mb-2">Prioridad:</label>
-              <select id="priority" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="Pendiente">Pendiente</option>
-                <option value="Tentative">Tentativa</option>
-                <option value="Normal" selected>Normal</option>
-                <option value="Urgent">Urgente</option>
-              </select>
+              <label for="eventTitle" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Título del Evento</label>
+              <input type="text" id="eventTitle" placeholder="Reunión, entrega, etc." class="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow text-sm font-medium" required>
             </div>
+            
+            <!-- Fechas -->
+            <div class="grid grid-cols-1 gap-4">
+              <div>
+                <label for="startDate" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Inicio</label>
+                <input type="datetime-local" id="startDate" class="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required>
+              </div>
+              <div>
+                <label for="endDate" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Fin (Opcional)</label>
+                <input type="datetime-local" id="endDate" class="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+              </div>
+            </div>
+            
+            <!-- Prioridad -->
             <div>
-              <label for="eventNotes" class="block text-slate-600 text-sm font-bold mb-2">Notas (Opcional):</label>
-              <textarea id="eventNotes" rows="3" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"></textarea>
+              <label for="priority" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Prioridad</label>
+              <div class="relative">
+                  <select id="priority" class="w-full pl-4 pr-10 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold appearance-none">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Tentative">Tentativa</option>
+                    <option value="Normal" selected>Normal</option>
+                    <option value="Urgent">Urgente</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                    <i data-feather="chevron-down" class="w-4 h-4"></i>
+                  </div>
+              </div>
+            </div>
+            
+            <!-- Notas -->
+            <div>
+              <label for="eventNotes" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Notas</label>
+              <textarea id="eventNotes" rows="3" placeholder="Detalles adicionales..." class="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"></textarea>
             </div>
           </div>
         </form>
       </div>
       
-      <div class="p-6 border-t border-slate-200 mt-auto bg-slate-50">
-        <div class="flex items-center justify-between space-x-4">
-          <button type="button" id="deleteEventBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg hidden transition-colors">Eliminar</button>
-          <button type="submit" form="eventForm" id="saveEventBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full">Guardar</button>
-        </div>
-        <button type="button" id="closeModalBtn" class="mt-4 text-center w-full text-slate-500 hover:text-slate-700">Cancelar</button>
+      <div class="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex flex-col-reverse md:flex-row gap-3 md:justify-end">
+         <button type="button" id="closeModalBtn" class="px-4 py-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium transition text-sm">Cancelar</button>
+         <div class="flex gap-3 w-full md:w-auto">
+            <button type="button" id="deleteEventBtn" class="flex-1 md:flex-none px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 font-semibold rounded-lg hidden transition text-sm border border-red-200 dark:border-red-800">Eliminar</button>
+            <button type="submit" form="eventForm" id="saveEventBtn" class="flex-1 md:flex-none px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md shadow-blue-500/20 transition text-sm">Guardar</button>
+         </div>
       </div>
     </div>
   </div>
 
   <!-- Modal para Eventos Recurrentes (Cierres) -->
-  <div id="recurringEventModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-40">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden">
-        <div class="flex items-center justify-between p-6 border-b border-slate-200">
-            <h2 id="recurringModalTitle" class="text-2xl font-bold text-slate-700">Nuevo Cierre Mensual</h2>
-            <button id="xCloseRecurringModalBtn" class="text-slate-400 hover:text-slate-800 text-3xl font-light">&times;</button>
+  <div id="recurringEventModal" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center p-4 hidden z-[60]">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700 bg-teal-50 dark:bg-teal-900/20">
+            <h2 id="recurringModalTitle" class="text-lg font-bold text-teal-800 dark:text-teal-300 flex items-center gap-2">
+                <i data-feather="repeat" class="w-5 h-5"></i> Nuevo Cierre Mensual
+            </h2>
+            <button id="xCloseRecurringModalBtn" class="text-teal-600/60 hover:text-teal-800 dark:hover:text-teal-200 transition-colors">
+                <i data-feather="x" class="w-5 h-5"></i>
+            </button>
         </div>
         <div class="p-6 overflow-y-auto">
             <form id="recurringEventForm" novalidate>
                 <div class="space-y-5">
                     <div>
-                        <label for="recurringClientName" class="block text-slate-600 text-sm font-bold mb-2">Nombre del Cliente:</label>
-                        <input type="text" id="recurringClientName" placeholder="AGREGAR CIERRE DEL CLIENTE" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <label for="recurringClientName" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Nombre del Cliente</label>
+                        <input type="text" id="recurringClientName" placeholder="Ej: Empresa XYZ" class="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" required>
                     </div>
                     <div>
-                        <label for="recurringDay" class="block text-slate-600 text-sm font-bold mb-2">Día de Cierre (1-31):</label>
-                        <input type="number" id="recurringDay" value="25" min="1" max="31" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <label for="recurringDay" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Día de Cierre Mensual</label>
+                        <input type="number" id="recurringDay" value="25" min="1" max="31" class="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" required>
+                        <p class="text-[10px] text-slate-400 mt-1">Se generará automáticamente para los próximos meses.</p>
                     </div>
                     <div>
-                        <label for="recurringUserName" class="block text-slate-600 text-sm font-bold mb-2">Responsable:</label>
-                        <select id="recurringUserName" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                            <option value="" disabled selected>Selecciona un responsable</option>
-                            <option value="Ronald Conde">Ronald Conde</option>
-                            <option value="Kevin Iturri">Kevin Iturri</option>
-                            <option value="Claudia Gutierrez">Claudia Gutierrez</option>
-                        </select>
+                        <label for="recurringUserName" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Responsable</label>
+                        <div class="relative">
+                            <select id="recurringUserName" class="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none text-sm" required>
+                                <option value="" disabled selected>Selecciona un responsable</option>
+                                <option value="Ronald Conde">Ronald Conde</option>
+                                <option value="Kevin Iturri">Kevin Iturri</option>
+                                <option value="Claudia Gutierrez">Claudia Gutierrez</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                <i data-feather="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
                     </div>
                     <div>
-                        <label for="recurringPriority" class="block text-slate-600 text-sm font-bold mb-2">Prioridad:</label>
-                        <select id="recurringPriority" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="Normal" selected>Normal</option>
-                            <option value="Urgent">Urgente</option>
-                            <option value="Tentative">Tentativa</option>
-                            <option value="Pendiente">Pendiente</option>
-                        </select>
+                        <label for="recurringPriority" class="block text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Prioridad</label>
+                        <div class="relative">
+                            <select id="recurringPriority" class="w-full pl-4 pr-10 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm font-semibold appearance-none">
+                                <option value="Normal" selected>Normal</option>
+                                <option value="Urgent">Urgente</option>
+                                <option value="Tentative">Tentativa</option>
+                                <option value="Pendiente">Pendiente</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                <i data-feather="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </form>
         </div>
-        <div class="p-6 border-t border-slate-200 mt-auto bg-slate-50">
-            <button type="submit" form="recurringEventForm" id="saveRecurringBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg w-full">Generar Cierres</button>
-            <button type="button" id="closeRecurringModalBtn" class="mt-4 text-center w-full text-slate-500 hover:text-slate-700">Cancelar</button>
+        <div class="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
+            <button type="button" id="closeRecurringModalBtn" class="flex-1 px-4 py-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium transition text-sm">Cancelar</button>
+            <button type="submit" form="recurringEventForm" id="saveRecurringBtn" class="flex-[2] bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg shadow-md shadow-teal-500/20 transition text-sm">Generar Cierres</button>
         </div>
     </div>
   </div>
 
 
   <!-- Modal de Confirmación de Eliminación -->
-  <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm text-center p-8">
-        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-            <i data-feather="trash-2" class="h-8 w-8 text-red-600"></i>
+  <div id="confirmModal" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center p-4 hidden z-[70]">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-sm text-center p-6 animate-in fade-in zoom-in duration-200 border border-slate-200 dark:border-slate-700">
+        <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+            <i data-feather="trash-2" class="h-6 w-6 text-red-600 dark:text-red-400"></i>
         </div>
-        <h2 class="text-2xl font-bold text-slate-800 mb-2">¿Estás seguro?</h2>
-        <p class="text-slate-500 mb-6">Esta acción no se puede deshacer. Se eliminará el evento permanentemente.</p>
-        <div class="flex justify-center items-center space-x-4">
-            <button id="cancelDeleteBtn" class="py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg">Cancelar</button>
-            <button id="confirmDeleteBtn" class="py-2 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg">Sí, eliminar</button>
+        <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-2">¿Eliminar este evento?</h2>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Esta acción es permanente y no se puede deshacer.</p>
+        <div class="flex justify-center items-center gap-3">
+            <button id="cancelDeleteBtn" class="flex-1 py-2 px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg text-sm transition">Cancelar</button>
+            <button id="confirmDeleteBtn" class="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-lg shadow-red-500/30 text-sm transition">Sí, eliminar</button>
         </div>
     </div>
   </div>
   
-  <script src="script.js"></script>
+  <!-- SCRIPT -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // --- 1. CONFIGURACIÓN DE SUPABASE ---
+    const SUPABASE_URL = 'https://xzzxodtbgnlsupkcncjb.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6enhvZHRiZ25sc3Vwa2NuY2piIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0OTIyMjMsImV4cCI6MjA3NjA2ODIyM30.CnYV46EaxYbLOJ4EcQeYkvzDEecbD_BelymgV1HVicU';
+
+    if (!window.supabase) {
+        console.error("Supabase client not loaded.");
+        return;
+    }
+    const { createClient } = window.supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // --- 2. ELEMENTOS DEL DOM ---
+    const calendarEl = document.getElementById('calendar');
+    const modal = document.getElementById('eventModal');
+    const addEventBtn = document.getElementById('addEventBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const xCloseModalBtn = document.getElementById('xCloseModalBtn');
+    const eventForm = document.getElementById('eventForm');
+    const saveEventBtn = document.getElementById('saveEventBtn');
+    const deleteEventBtn = document.getElementById('deleteEventBtn');
+    const userNameSelect = document.getElementById('userName');
+    const modalTitle = document.getElementById('modalTitle');
+    const notification = document.getElementById('notification');
+    const notificationText = document.getElementById('notification-text');
+    const tasksList = document.getElementById('tasksList');
+    const notificationBadge = document.getElementById('notification-badge');
+    const tooltipList = document.getElementById('tooltip-list');
+    const tasksToggle = document.getElementById('tasksToggle');
+    const prioritySelect = document.getElementById('priority');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    
+    // Modal de confirmación
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    
+    // Modal de eventos recurrentes
+    const addRecurringBtn = document.getElementById('addRecurringBtn');
+    const recurringModal = document.getElementById('recurringEventModal');
+    const recurringEventForm = document.getElementById('recurringEventForm');
+    const closeRecurringModalBtn = document.getElementById('closeRecurringModalBtn');
+    const xCloseRecurringModalBtn = document.getElementById('xCloseRecurringModalBtn');
+
+    let calendar;
+    let allEvents = [];
+    let currentTaskView = 'upcoming';
+    let userEventSource = null;
+
+    const holidays = [
+        { title: 'Año Nuevo', date: '2025-01-01', allDay: true, classNames: ['holiday-event', 'holiday-ano-nuevo'] },
+        { title: 'Estado Plurinacional', date: '2025-01-22', allDay: true, classNames: ['holiday-event', 'holiday-plurinacional'] },
+        { title: 'Lunes de Carnaval', date: '2025-03-03', allDay: true, classNames: ['holiday-event', 'holiday-carnaval'] },
+        { title: 'Martes de Carnaval', date: '2025-03-04', allDay: true, classNames: ['holiday-event', 'holiday-carnaval'] },
+        { title: 'Viernes Santo', date: '2025-04-18', allDay: true, classNames: ['holiday-event', 'holiday-viernes-santo'] },
+        { title: 'Día del Trabajo', date: '2025-05-01', allDay: true, classNames: ['holiday-event', 'holiday-trabajo'] },
+        { title: 'Corpus Christi', date: '2025-06-19', allDay: true, classNames: ['holiday-event', 'holiday-corpus'] },
+        { title: 'Año Nuevo Aymara', date: '2025-06-21', allDay: true, classNames: ['holiday-event', 'holiday-aymara'] },
+        { title: 'Día de la Independencia', date: '2025-08-06', allDay: true, classNames: ['holiday-event', 'holiday-independencia'] },
+        { title: 'Día de Todos Santos', date: '2025-11-02', allDay: true, classNames: ['holiday-event', 'holiday-santos'] },
+        { title: 'Navidad', date: '2025-12-25', allDay: true, classNames: ['holiday-event', 'holiday-navidad'] },
+        { title: 'Año Nuevo', date: '2026-01-01', allDay: true, classNames: ['holiday-event', 'holiday-ano-nuevo'] },
+        { title: 'Estado Plurinacional', date: '2026-01-22', allDay: true, classNames: ['holiday-event', 'holiday-plurinacional'] },
+        { title: 'Lunes de Carnaval', date: '2026-02-16', allDay: true, classNames: ['holiday-event', 'holiday-carnaval'] },
+        { title: 'Martes de Carnaval', date: '2026-02-17', allDay: true, classNames: ['holiday-event', 'holiday-carnaval'] },
+        { title: 'Viernes Santo', date: '2026-04-03', allDay: true, classNames: ['holiday-event', 'holiday-viernes-santo'] },
+        { title: 'Día del Trabajo', date: '2026-05-01', allDay: true, classNames: ['holiday-event', 'holiday-trabajo'] },
+        { title: 'Corpus Christi', date: '2026-06-04', allDay: true, classNames: ['holiday-event', 'holiday-corpus'] },
+        { title: 'Año Nuevo Aymara', date: '2026-06-22', allDay: true, classNames: ['holiday-event', 'holiday-aymara'] },
+        { title: 'Día de la Independencia', date: '2026-08-06', allDay: true, classNames: ['holiday-event', 'holiday-independencia'] },
+        { title: 'Día de Todos Santos', date: '2026-11-02', allDay: true, classNames: ['holiday-event', 'holiday-santos'] },
+        { title: 'Navidad', date: '2026-12-25', allDay: true, classNames: ['holiday-event', 'holiday-navidad'] },
+    ];
+
+    // --- 3. LÓGICA PRINCIPAL ---
+    async function initializeApp() {
+        if (!calendarEl) {
+            console.error("Calendar element #calendar not found.");
+            return;
+        }
+        feather.replace(); 
+        loadDarkModePreference();
+        initializeCalendar();
+        await fetchAndRenderEvents();
+        listenForRealtimeChanges();
+        setupEventListeners();
+        updateTaskViewToggle();
+    }
+
+    initializeApp();
+
+    // --- 4. MANEJO DE EVENTOS DE UI ---
+    function setupEventListeners() {
+        addEventBtn.addEventListener('click', () => openModalForNew());
+        closeModalBtn.addEventListener('click', closeModal);
+        xCloseModalBtn.addEventListener('click', closeModal);
+        eventForm.addEventListener('submit', handleFormSubmit);
+        
+        deleteEventBtn.addEventListener('click', () => {
+            const eventId = document.getElementById('eventId').value;
+            if (eventId) showConfirmDeleteModal(eventId);
+        });
+
+        cancelDeleteBtn.addEventListener('click', hideConfirmDeleteModal);
+        confirmDeleteBtn.addEventListener('click', async () => {
+            const eventId = confirmModal.dataset.eventId;
+            if (eventId) await deleteEvent(eventId);
+        });
+        
+        addRecurringBtn.addEventListener('click', openRecurringModal);
+        closeRecurringModalBtn.addEventListener('click', closeRecurringModal);
+        xCloseRecurringModalBtn.addEventListener('click', closeRecurringModal);
+        recurringEventForm.addEventListener('submit', handleRecurringFormSubmit);
+
+        userNameSelect.addEventListener('change', () => {
+            localStorage.setItem('calendarUserName', userNameSelect.value);
+        });
+        
+        if (localStorage.getItem('calendarUserName')) {
+            userNameSelect.value = localStorage.getItem('calendarUserName');
+        }
+
+        tasksToggle.addEventListener('click', (e) => {
+            const view = e.target.dataset.view;
+            if (view && view !== currentTaskView) {
+                currentTaskView = view;
+                updateTasksList(allEvents);
+                updateTaskViewToggle();
+            }
+        });
+
+        prioritySelect.addEventListener('change', (e) => updatePrioritySelectColor(e.target, e.target.value));
+        document.getElementById('recurringPriority').addEventListener('change', (e) => updatePrioritySelectColor(e.target, e.target.value));
+
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+    }
+
+    // --- 5. FUNCIONES DE SUPABASE Y TIEMPO REAL ---
+    async function fetchAndRenderEvents() {
+        const { data, error } = await supabaseClient.from('events').select('*');
+        if (error) {
+            console.error('Error fetching events:', error);
+            showNotification(`Error: ${error.message}`, true);
+            return;
+        }
+        allEvents = data;
+        
+        if (userEventSource) userEventSource.remove();
+        userEventSource = calendar.addEventSource(formatEventsForCalendar(allEvents));
+        
+        updateTasksList(allEvents);
+        updateNotificationBell(allEvents);
+    }
+
+    function listenForRealtimeChanges() {
+        supabaseClient.channel('public:events')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, payload => {
+                fetchAndRenderEvents();
+                showNotification('Calendario actualizado en tiempo real.');
+            })
+            .subscribe();
+    }
+
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        const eventData = {
+            user: userNameSelect.value,
+            title: document.getElementById('eventTitle').value,
+            start: new Date(document.getElementById('startDate').value).toISOString(),
+            end: document.getElementById('endDate').value ? new Date(document.getElementById('endDate').value).toISOString() : null,
+            priority: document.getElementById('priority').value,
+            notes: document.getElementById('eventNotes').value,
+        };
+        const eventId = document.getElementById('eventId').value;
+
+        if (!eventData.user || !eventData.title || !eventData.start) {
+            showNotification('Por favor, completa los campos requeridos.', true);
+            return;
+        }
+
+        const { error } = eventId
+            ? await supabaseClient.from('events').update(eventData).eq('id', eventId)
+            : await supabaseClient.from('events').insert([eventData]);
+
+        if (error) {
+            showNotification(`Error: ${error.message}`, true);
+        } else {
+            showNotification(`Evento ${eventId ? 'actualizado' : 'guardado'} con éxito.`);
+            closeModal();
+        }
+    }
+    
+    async function handleRecurringFormSubmit(e) {
+        e.preventDefault();
+        
+        const clientName = document.getElementById('recurringClientName').value;
+        const dayOfMonth = parseInt(document.getElementById('recurringDay').value);
+        const user = document.getElementById('recurringUserName').value;
+        const priority = document.getElementById('recurringPriority').value;
+
+        if (!clientName || !dayOfMonth || !user) {
+            showNotification('Completa todos los campos para el cierre.', true);
+            return;
+        }
+
+        const newEvents = [];
+        const today = new Date();
+        const monthsToGenerate = (dayOfMonth === 31) ? 6 : 12;
+
+        for (let i = 0; i < monthsToGenerate; i++) {
+            const currentMonthDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            const year = currentMonthDate.getFullYear();
+            const month = currentMonthDate.getMonth();
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const targetDay = Math.min(dayOfMonth, daysInMonth);
+
+            let eventDate = new Date(year, month, targetDay, 12, 0, 0);
+            let dayOfWeek = eventDate.getDay(); 
+            
+            if (dayOfWeek === 6) { // Saturday
+                eventDate.setDate(eventDate.getDate() - 1);
+            } else if (dayOfWeek === 0) { // Sunday
+                eventDate.setDate(eventDate.getDate() - 2);
+            }
+            
+            newEvents.push({
+                user: user,
+                title: `Cierre - ${clientName}`,
+                start: eventDate.toISOString(),
+                priority: priority,
+                notes: `Cierre mensual para el día ${dayOfMonth}.`
+            });
+        }
+
+        const { error } = await supabaseClient.from('events').insert(newEvents);
+        if (error) {
+            showNotification(`Error al crear cierres: ${error.message}`, true);
+        } else {
+            showNotification(`Se generaron ${monthsToGenerate} cierres para ${clientName}.`, false);
+            closeRecurringModal();
+        }
+    }
+
+    async function deleteEvent(eventId) {
+        if (!eventId) return;
+        const { error } = await supabaseClient.from('events').delete().eq('id', eventId);
+        hideConfirmDeleteModal();
+        if (error) {
+            showNotification(`Error al eliminar: ${error.message}`, true);
+        } else {
+            showNotification('Evento eliminado con éxito.');
+            closeModal();
+        }
+    }
+    
+    // --- 6. FUNCIONES DE UI Y AUXILIARES ---
+    function initializeCalendar() {
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+            locale: 'es',
+            buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', list: 'Agenda' },
+            eventSources: [{ events: holidays, editable: false }],
+            eventClassNames: (arg) => {
+                if(arg.event.extendedProps.user) {
+                    const user = (arg.event.extendedProps.user || 'default').toLowerCase().replace(/\s+/g, '-');
+                    const priority = (arg.event.extendedProps.priority || 'default').toLowerCase();
+                    return [`event-${user}`, `event-${priority}`];
+                }
+                return [];
+            },
+            eventDidMount: (info) => {
+                if(info.event.extendedProps.user) {
+                    tippy(info.el, {
+                        content: createTooltipContent(info.event),
+                        allowHTML: true, theme: 'custom', placement: 'top', animation: 'shift-away',
+                    });
+                }
+            },
+            dateClick: (info) => openModalForNew(info.date),
+            eventClick: (info) => {
+                if(info.event.extendedProps.user) openModalForEdit(info.event)
+            },
+        });
+        calendar.render();
+    }
+
+    function createTooltipContent(event) {
+        const { user, priority, notes } = event.extendedProps;
+        const start = new Date(event.start).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+        const end = event.end ? new Date(event.end).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+        return `<div class="tooltip-content"><div class="tooltip-title">${event.title}</div><div class="tooltip-body"><p><strong>Responsable:</strong> ${user}</p><p><strong>Prioridad:</strong> ${priority}</p><p><strong>Inicio:</strong> ${start}</p><p><strong>Fin:</strong> ${end}</p>${notes ? `<p><strong>Notas:</strong> ${notes}</p>` : ''}</div></div>`;
+    }
+
+    function formatEventsForCalendar(events) {
+        return events.map(event => ({ id: event.id, title: event.title, start: event.start, end: event.end, extendedProps: { ...event } }));
+    }
+
+    function updateTasksList(events) {
+        const currentUser = localStorage.getItem('calendarUserName');
+        const now = new Date();
+        const filteredEvents = currentTaskView === 'past'
+            ? events.filter(e => new Date(e.start) < now).sort((a, b) => new Date(b.start) - new Date(a.start))
+            : events.filter(e => new Date(e.start) >= now).sort((a, b) => new Date(a.start) - new Date(b.start));
+
+        tasksList.innerHTML = '';
+        if (filteredEvents.length === 0) {
+            tasksList.innerHTML = `<p class="text-center text-slate-400 mt-8 text-sm italic">No hay tareas ${currentTaskView === 'past' ? 'pasadas' : 'pendientes'}.</p>`;
+            return;
+        }
+
+        filteredEvents.forEach((event) => {
+            const el = document.createElement('div');
+            // MODIFICACIÓN DE DISEÑO: Estilo de tarjeta más limpio
+            el.className = `relative flex items-center space-x-3 p-3 rounded-xl cursor-pointer transition-all duration-200 border border-slate-100 dark:border-slate-700 border-l-4 hover:shadow-md bg-white dark:bg-slate-800 ${event.user === currentUser ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700'} priority-border-${event.priority}`;
+            el.onclick = () => { if(calendar.getEventById(event.id)) openModalForEdit(calendar.getEventById(event.id)); };
+            
+            // MODIFICACIÓN DE DISEÑO: Tipografía ajustada
+            el.innerHTML = `
+            <div class="flex-grow overflow-hidden">
+                <p class="font-bold text-slate-700 dark:text-slate-200 text-sm truncate">${event.title}</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${new Date(event.start).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}</p>
+                <div class="flex items-center space-x-2 mt-1.5">
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">${event.user}</span>
+                    ${event.notes ? `<i data-feather="file-text" class="h-3 w-3 text-slate-400" title="${event.notes}"></i>` : ''}
+                </div>
+            </div>`;
+            tasksList.appendChild(el);
+        });
+        feather.replace();
+    }
+    
+    function updateNotificationBell(events) {
+        const now = new Date();
+        
+        // CALCULAR EL RANGO DE HOY (00:00:00) HASTA MAÑANA (23:59:59)
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        const endOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59, 999);
+
+        // Filtramos eventos que caigan dentro de este rango completo
+        const upcoming = events.filter(e => {
+            const eventDate = new Date(e.start);
+            return eventDate >= startOfToday && eventDate <= endOfTomorrow;
+        });
+        
+        // Ordenamos por fecha para que salgan los más próximos primero
+        upcoming.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+        notificationBadge.textContent = upcoming.length;
+        notificationBadge.classList.toggle('hidden', upcoming.length === 0);
+        tooltipList.innerHTML = upcoming.length > 0 ? upcoming.map(e => `<li class="truncate py-1 border-b border-slate-100 dark:border-slate-700 last:border-0">• ${e.title} <span class="text-xs text-slate-400">(${e.user})</span></li>`).join('') : '<li class="text-slate-400 italic text-center py-2">Nada para hoy o mañana.</li>';
+    }
+
+    function showNotification(message, isError = false) {
+        notification.className = `fixed top-6 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 transform ${isError ? 'bg-red-500' : 'bg-green-600'} text-white py-3 px-6 rounded-xl shadow-xl flex items-center gap-3 min-w-[300px] justify-center`;
+        // Corrección visual: Icono basado en estado
+        const icon = isError ? '<i data-feather="alert-circle"></i>' : '<i data-feather="check-circle"></i>';
+        notification.innerHTML = `${icon}<span class="font-medium text-sm">${message}</span>`;
+        feather.replace();
+        
+        notification.style.transform = 'translate(-50%, 0)';
+        setTimeout(() => { notification.style.transform = 'translate(-50%, -200%)'; }, 3000);
+    }
+
+    function toLocalISOString(date) {
+        if (!date) return '';
+        const d = new Date(date);
+        return isNaN(d.getTime()) ? '' : new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    }
+    
+    function updateTaskViewToggle() {
+        document.querySelectorAll('#tasksToggle button').forEach(btn => {
+            // Ajuste de clases para coincidir con el nuevo CSS
+            btn.classList.toggle('active-view', btn.dataset.view === currentTaskView);
+        });
+    }
+
+    function updatePrioritySelectColor(el, priority) {
+        el.classList.remove('priority-select-Pendiente', 'priority-select-Tentative', 'priority-select-Normal', 'priority-select-Urgent');
+        if (priority) el.classList.add(`priority-select-${priority}`);
+    }
+
+    function openModalForNew(date) {
+        eventForm.reset();
+        modalTitle.textContent = 'Nuevo Evento';
+        deleteEventBtn.classList.add('hidden');
+        saveEventBtn.textContent = 'Guardar';
+        document.getElementById('eventId').value = '';
+        document.getElementById('startDate').value = toLocalISOString(date || new Date());
+        userNameSelect.value = localStorage.getItem('calendarUserName') || '';
+        updatePrioritySelectColor(prioritySelect, 'Normal');
+        prioritySelect.value = 'Normal';
+        modal.classList.remove('hidden');
+    }
+
+    function openModalForEdit(event) {
+        const { id, title, start, end, priority, user, notes } = event.extendedProps;
+        eventForm.reset();
+        modalTitle.textContent = 'Editar Evento';
+        deleteEventBtn.classList.remove('hidden');
+        saveEventBtn.textContent = 'Actualizar';
+        document.getElementById('eventId').value = id;
+        document.getElementById('userName').value = user;
+        document.getElementById('eventTitle').value = title;
+        document.getElementById('startDate').value = toLocalISOString(new Date(start));
+        document.getElementById('endDate').value = toLocalISOString(end ? new Date(end) : null);
+        document.getElementById('priority').value = priority;
+        document.getElementById('eventNotes').value = notes || '';
+        updatePrioritySelectColor(prioritySelect, priority);
+        modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+    }
+
+    function showConfirmDeleteModal(eventId) {
+        confirmModal.dataset.eventId = eventId;
+        confirmModal.classList.remove('hidden');
+    }
+
+    function hideConfirmDeleteModal() {
+        confirmModal.classList.add('hidden');
+        delete confirmModal.dataset.eventId;
+    }
+
+    function openRecurringModal() {
+        recurringEventForm.reset();
+        document.getElementById('recurringUserName').value = localStorage.getItem('calendarUserName') || '';
+        updatePrioritySelectColor(document.getElementById('recurringPriority'), 'Normal');
+        document.getElementById('recurringPriority').value = 'Normal';
+        recurringModal.classList.remove('hidden');
+    }
+
+    function closeRecurringModal() {
+        recurringModal.classList.add('hidden');
+    }
+
+    function toggleDarkMode() {
+        const html = document.documentElement;
+        html.classList.toggle('dark');
+        
+        if (html.classList.contains('dark')) {
+            localStorage.setItem('darkMode', 'enabled');
+            darkModeToggle.innerHTML = `<i data-feather="sun" class="text-yellow-400"></i>`; // Cambio visual
+        } else {
+            localStorage.removeItem('darkMode');
+            darkModeToggle.innerHTML = `<i data-feather="moon" class="text-slate-600"></i>`;
+        }
+        feather.replace();
+    }
+
+    function loadDarkModePreference() {
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.documentElement.classList.add('dark');
+            darkModeToggle.innerHTML = `<i data-feather="sun" class="text-yellow-400"></i>`; // Cambio visual
+        } else {
+            darkModeToggle.innerHTML = `<i data-feather="moon" class="text-slate-600"></i>`;
+        }
+        feather.replace();
+    }
+});
+</script>
 </body>
 </html>
-
